@@ -1,0 +1,20 @@
+{
+  "name": "openapi-request-validator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Oleksandr Khotemskyi <xotabu4@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^6.12.3",
+    "swagger-parser": "^9.0.1",
+    "uri-templates": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^12.0.0",
+    "typescript": "^3.9.5"
+  }
+}
