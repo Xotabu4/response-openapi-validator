@@ -93,8 +93,8 @@ export class OpenApiValidator {
         let validate
         try {
             validate = ajv.compile(schema);
-        } catch (error) {
-            throw new JSONSchemaCannotBeCompiledError(response);
+        } catch (jsonSchemaCompilationError) {
+            throw new JSONSchemaCannotBeCompiledError(response, jsonSchemaCompilationError);
         }
 
         const valid = await validate(response.body);
@@ -158,11 +158,15 @@ export class MultipleJSONSchemasDefinedError extends OpenApiValidationError {
 }
 
 export class JSONSchemaCannotBeCompiledError extends OpenApiValidationError {
-    constructor(response: ResponseToValidate) {
+    constructor(response: ResponseToValidate, jsonSchemaCompilationError: Error) {
         super(`
         JSON schema found for response:
         ${response.method} | ${response.requestUrl} | ${response.statusCode}
         is found, but cannot be used since AJV cannot compile schema. This is OpenApi spec issue.
+
+        Got AJV error ${jsonSchemaCompilationError.name} with message:
+        ${jsonSchemaCompilationError.message}
+
         Validation cannot be done
         `)
         this.name = 'JSONSchemaCannotBeCompiledError'
