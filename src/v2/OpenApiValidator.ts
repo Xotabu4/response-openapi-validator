@@ -63,12 +63,11 @@ export class OpenApiValidator {
                 }
                 return URItemplate(templatePath).test(urlPath)
             } catch (err) {
-                // console.warn(`[SwaggerValidator] Swagger docs error! Cannot match ${template} to ${url}`)
                 return false
             }
         }).filter(path => path !== null && path !== undefined)
         if (matchingPaths.length === 0) {
-            throw new UrlIsNotDescribedInOpenApi(url)
+            throw new UrlIsNotDescribedInOpenApiError(url)
         }
         return Object.fromEntries(matchingPaths.map(pth => [pth, api.paths[pth]]))
     }
@@ -83,10 +82,10 @@ export class OpenApiValidator {
             .filter(schema => schema !== undefined && schema !== null)
 
         if (schemas.length === 0) {
-            throw new JSONSchemaMissing(response)
+            throw new JSONSchemaMissingError(response)
         }
         if (schemas.length > 1) {
-            throw new MultipleJSONSchemasDefined(response)
+            throw new MultipleJSONSchemasDefinedError(response)
         }
         const schema = schemas[0];
 
@@ -95,12 +94,12 @@ export class OpenApiValidator {
         try {
             validate = ajv.compile(schema);
         } catch (error) {
-            throw new JSONSchemaCannotBeCompiled(response);
+            throw new JSONSchemaCannotBeCompiledError(response);
         }
 
         const valid = await validate(response.body);
         if (!valid) {
-            throw new ResponseDoesNotMatchJSONSchema({
+            throw new ResponseDoesNotMatchJSONSchemaError({
                 response: {
                     method: response.method,
                     requestUrl: response.requestUrl,
@@ -114,7 +113,7 @@ export class OpenApiValidator {
     }
 }
 
-export class ResponseDoesNotMatchJSONSchema extends Error {
+export class ResponseDoesNotMatchJSONSchemaError extends Error {
     constructor(public validationResult: { response: ResponseToValidate, schema: any, validationErrors: Ajv.ErrorObject[] }) {
         super(`
         Response does not match defined Open API JSON schema.
@@ -128,30 +127,33 @@ export class ResponseDoesNotMatchJSONSchema extends Error {
         Validation errors:
         ${JSON.stringify(validationResult.validationErrors, null, 2)}
         `)
+        this.name = 'ResponseDoesNotMatchJSONSchemaError'
     }
 }
 
-export class JSONSchemaMissing extends Error {
+export class JSONSchemaMissingError extends Error {
     constructor(response: ResponseToValidate) {
         super(`
         OpenApi spec does not contain body schema found for response: 
         ${response.method} | ${response.requestUrl} | ${response.statusCode}
         Validation cannot be done
         `)
+        this.name = 'JSONSchemaMissingError'
     }
 }
 
-export class MultipleJSONSchemasDefined extends Error {
+export class MultipleJSONSchemasDefinedError extends Error {
     constructor(response: ResponseToValidate) {
         super(`
         OpenApi has multiple schemas defined for response: 
         ${response.method} | ${response.requestUrl} | ${response.statusCode}
         Validation cannot be done
         `)
+        this.name = 'MultipleJSONSchemasDefinedError'
     }
 }
 
-export class JSONSchemaCannotBeCompiled extends Error {
+export class JSONSchemaCannotBeCompiledError extends Error {
     constructor(response: ResponseToValidate) {
         super(`
         JSON schema found for response:
@@ -159,13 +161,15 @@ export class JSONSchemaCannotBeCompiled extends Error {
         is found, but cannot be used since AJV cannot compile schema. This is OpenApi spec issue.
         Validation cannot be done
         `)
+        this.name = 'JSONSchemaCannotBeCompiledError'
     }
 }
 
-export class UrlIsNotDescribedInOpenApi extends Error {
+export class UrlIsNotDescribedInOpenApiError extends Error {
     constructor(url: string) {
         super(`
         OpenApi specification does not contain specification for ${url} 
         `)
+        this.name = 'UrlIsNotDescribedInOpenApiError'
     }
 }
