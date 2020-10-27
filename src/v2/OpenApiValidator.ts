@@ -78,8 +78,10 @@ export class OpenApiValidator {
             throw new Error('response argument is not defined. This is testing framework issue, not real bug')
         }
         const matchingPaths = await this.findMatchingPathInDocs(response.requestUrl)
-        const schemas = Object.values<OpenAPIV2.PathsObject>(matchingPaths).map((pathObj) => pathObj[response.method.toLowerCase()]?.responses[response.statusCode]?.schema).filter(schema => schema !== undefined && schema !== null)
-        // const schema = matchingPaths[response.method.toLowerCase()]?.responses[response.statusCode]?.schema;
+        const schemas = Object.values<OpenAPIV2.PathsObject>(matchingPaths)
+            .map(pathObj => pathObj[response.method.toLowerCase()]?.responses[response.statusCode]?.schema)
+            .filter(schema => schema !== undefined && schema !== null)
+
         if (schemas.length === 0) {
             throw new JSONSchemaMissing(response)
         }
@@ -106,14 +108,14 @@ export class OpenApiValidator {
                     body: response.body,
                 },
                 schema: schema,
-                validationErrors: validate.errors
+                validationErrors: validate.errors as Ajv.ErrorObject[]
             })
         }
     }
 }
 
 export class ResponseDoesNotMatchJSONSchema extends Error {
-    constructor(public validationResult: { response: ResponseToValidate, schema: any, validationErrors: any }) {
+    constructor(public validationResult: { response: ResponseToValidate, schema: any, validationErrors: Ajv.ErrorObject[] }) {
         super(`
         Response does not match defined Open API JSON schema.
 

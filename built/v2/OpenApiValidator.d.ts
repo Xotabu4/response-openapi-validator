@@ -23,12 +23,12 @@ export declare class ResponseDoesNotMatchJSONSchema extends Error {
     validationResult: {
         response: ResponseToValidate;
         schema: any;
-        validationErrors: any;
+        validationErrors: Ajv.ErrorObject[];
     };
     constructor(validationResult: {
         response: ResponseToValidate;
         schema: any;
-        validationErrors: any;
+        validationErrors: Ajv.ErrorObject[];
     });
 }
 export declare class JSONSchemaMissing extends Error {
