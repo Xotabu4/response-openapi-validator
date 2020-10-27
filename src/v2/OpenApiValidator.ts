@@ -5,9 +5,9 @@ import Ajv from 'ajv';
 import type { OpenAPI, OpenAPIV2 } from "openapi-types";
 
 export interface OpenApiValidatorOptions {
-    apiPathPrefix: string,
+    apiPathPrefix?: string,
     openApiSpecPath: string
-    ajvOptions: Ajv.Options
+    ajvOptions?: Ajv.Options
 }
 
 export interface ResponseToValidate {
@@ -98,14 +98,13 @@ export class OpenApiValidator {
 
         const valid = await validate(response.body);
         if (!valid) {
-            // console.warn(`[SwaggerValidationError] ${response.method} | ${response.requestUrl} | ${response.statusCode} check allure report for more details`)
-            const validationError = JSON.stringify({
+            throw new ResponseDoesNotMatchJSONSchema({
                 response: {
                     method: response.method,
                     requestUrl: response.requestUrl,
-                    statusCode: response.statusCode
+                    statusCode: response.statusCode,
+                    body: response.body,
                 },
-                body: response.body,
                 schema: schema,
                 validationErrors: validate.errors
             })
@@ -114,7 +113,7 @@ export class OpenApiValidator {
 }
 
 export class ResponseDoesNotMatchJSONSchema extends Error {
-    constructor(validationResult: { response: ResponseToValidate, schema: any, validationErrors: any }) {
+    constructor(public validationResult: { response: ResponseToValidate, schema: any, validationErrors: any }) {
         super(`
         Response does not match defined Open API JSON schema.
 

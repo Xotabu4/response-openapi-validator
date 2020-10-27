@@ -1,10 +1,10 @@
 {
   "name": "openapi-request-validator",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Asserts payload structure against OpenApi docs",
+  "types": "./built/*.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc"
   },
   "author": "Oleksandr Khotemskyi <xotabu4@gmail.com>",
   "license": "MIT",
