@@ -131,7 +131,11 @@ export class ResponseDoesNotMatchJSONSchemaError extends Error {
     }
 }
 
-export class JSONSchemaMissingError extends Error {
+export class OpenApiValidationError extends Error {
+    isOpenApiValidationError: boolean = true
+}
+
+export class JSONSchemaMissingError extends OpenApiValidationError {
     constructor(response: ResponseToValidate) {
         super(`
         OpenApi spec does not contain body schema found for response: 
@@ -142,7 +146,7 @@ export class JSONSchemaMissingError extends Error {
     }
 }
 
-export class MultipleJSONSchemasDefinedError extends Error {
+export class MultipleJSONSchemasDefinedError extends OpenApiValidationError {
     constructor(response: ResponseToValidate) {
         super(`
         OpenApi has multiple schemas defined for response: 
@@ -153,7 +157,7 @@ export class MultipleJSONSchemasDefinedError extends Error {
     }
 }
 
-export class JSONSchemaCannotBeCompiledError extends Error {
+export class JSONSchemaCannotBeCompiledError extends OpenApiValidationError {
     constructor(response: ResponseToValidate) {
         super(`
         JSON schema found for response:
@@ -165,7 +169,7 @@ export class JSONSchemaCannotBeCompiledError extends Error {
     }
 }
 
-export class UrlIsNotDescribedInOpenApiError extends Error {
+export class UrlIsNotDescribedInOpenApiError extends OpenApiValidationError {
     constructor(url: string) {
         super(`
         OpenApi specification does not contain specification for ${url} 
