@@ -113,7 +113,11 @@ export class OpenApiValidator {
     }
 }
 
-export class ResponseDoesNotMatchJSONSchemaError extends Error {
+export class OpenApiValidationError extends Error {
+    isOpenApiValidationError: boolean = true
+}
+
+export class ResponseDoesNotMatchJSONSchemaError extends OpenApiValidationError {
     constructor(public validationResult: { response: ResponseToValidate, schema: any, validationErrors: Ajv.ErrorObject[] }) {
         super(`
         Response does not match defined Open API JSON schema.
@@ -129,10 +133,6 @@ export class ResponseDoesNotMatchJSONSchemaError extends Error {
         `)
         this.name = 'ResponseDoesNotMatchJSONSchemaError'
     }
-}
-
-export class OpenApiValidationError extends Error {
-    isOpenApiValidationError: boolean = true
 }
 
 export class JSONSchemaMissingError extends OpenApiValidationError {
