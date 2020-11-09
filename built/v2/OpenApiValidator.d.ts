@@ -19,7 +19,10 @@ export declare class OpenApiValidator {
     protected findMatchingPathInDocs(url: string): Promise<OpenAPIV2.PathsObject>;
     assertResponse(response: ResponseToValidate): Promise<void>;
 }
-export declare class ResponseDoesNotMatchJSONSchema extends Error {
+export declare class OpenApiValidationError extends Error {
+    isOpenApiValidationError: boolean;
+}
+export declare class ResponseDoesNotMatchJSONSchemaError extends OpenApiValidationError {
     validationResult: {
         response: ResponseToValidate;
         schema: any;
@@ -31,15 +34,15 @@ export declare class ResponseDoesNotMatchJSONSchema extends Error {
         validationErrors: Ajv.ErrorObject[];
     });
 }
-export declare class JSONSchemaMissing extends Error {
+export declare class JSONSchemaMissingError extends OpenApiValidationError {
     constructor(response: ResponseToValidate);
 }
-export declare class MultipleJSONSchemasDefined extends Error {
+export declare class MultipleJSONSchemasDefinedError extends OpenApiValidationError {
     constructor(response: ResponseToValidate);
 }
-export declare class JSONSchemaCannotBeCompiled extends Error {
-    constructor(response: ResponseToValidate);
+export declare class JSONSchemaCannotBeCompiledError extends OpenApiValidationError {
+    constructor(response: ResponseToValidate, jsonSchemaCompilationError: Error);
 }
-export declare class UrlIsNotDescribedInOpenApi extends Error {
+export declare class UrlIsNotDescribedInOpenApiError extends OpenApiValidationError {
     constructor(url: string);
 }
