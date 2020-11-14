@@ -1,3 +1,7 @@
+I found out that such lib already exists, so i deprecating mine. This lib was never published to NPM and will be removed from github in nearest future.
+# USE https://github.com/openapi-library/OpenAPIValidators/tree/master/packages/chai-openapi-response-validator INSTEAD
+
+
 # openapi-request-validator
 
 -   TODO: Add open api v3 support
