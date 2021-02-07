@@ -1,8 +1,9 @@
 {
-  "name": "openapi-request-validator",
-  "version": "1.0.0",
-  "description": "Asserts payload structure against OpenApi docs",
-  "types": "./built/*.d.ts",
+  "name": "response-openapi-validator",
+  "version": "1.1.0",
+  "description": "Asserts your responses against Swagger/OpenApi docs. Useful for API testing.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc"
   },

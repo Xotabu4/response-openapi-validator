@@ -1,15 +1,16 @@
-I found out that such lib already exists, so i deprecating mine. This lib was never published to NPM and will be removed from github in nearest future.
-# USE https://github.com/openapi-library/OpenAPIValidators/tree/master/packages/chai-openapi-response-validator INSTEAD
+# response-openapi-validator
 
+This library allows to match your existing response against your swagger/openapi docs.
 
-# openapi-request-validator
+- Does lookup in your docs, and finds schema defined for provided response
+- Uses AJV to validate response body against found schema 
+- Provides nice and clean errors
+- Framework/Stack agnostic (works with everything)
+- OpenApi v3 support is not yet verified
 
--   TODO: Add open api v3 support
-
--   TODO: Add unit tests
 
 ```typescript
-const validator = new OpenApiValidator({
+const validator = new ResponseValidator({
     openApiSpecPath: "./.temp/open_api_docs.json",
 });
 
@@ -29,7 +30,8 @@ AJV is used to match found JSON schema against body.
 You can define AJV options by passing param:
 
 ```typescript
-const validator = new OpenApiValidator({
+const validator = new ResponseValidator({
+    // Also can be URL
     openApiSpecPath: "./.temp/open_api_docs.json",
     // You can see all AJV options here
     // https://github.com/ajv-validator/ajv#options

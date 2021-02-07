@@ -1,23 +1,16 @@
-import SwaggerParser from "@apidevtools/swagger-parser";
-const URItemplate = require('uri-templates')
-
-import Ajv from 'ajv';
+import * as SwaggerParser from "@apidevtools/swagger-parser";
+import * as URItemplate from 'uri-templates'
+import * as Ajv from 'ajv';
 import type { OpenAPI, OpenAPIV2 } from "openapi-types";
 
-export interface OpenApiValidatorOptions {
-    apiPathPrefix?: string,
-    openApiSpecPath: string
-    ajvOptions?: Ajv.Options
-}
+import {
+    UrlIsNotDescribedInOpenApiError, JSONSchemaMissingError, MultipleJSONSchemasDefinedError,
+    JSONSchemaCannotBeCompiledError, ResponseDoesNotMatchJSONSchemaError
+} from "./Errors";
+import { ResponseValidatorOptions, ResponseToValidate } from "./Types";
 
-export interface ResponseToValidate {
-    requestUrl: string,
-    statusCode: number,
-    method: string,
-    body: any
-}
 
-const defaultOptions: OpenApiValidatorOptions = {
+const defaultOptions: ResponseValidatorOptions = {
     apiPathPrefix: '',
     openApiSpecPath: '', // TODO: throw error when path not provided
     ajvOptions: {
@@ -27,11 +20,11 @@ const defaultOptions: OpenApiValidatorOptions = {
     }
 }
 
-export class OpenApiValidator {
-    private readonly options: OpenApiValidatorOptions;
+export class ResponseValidator {
+    private readonly options: ResponseValidatorOptions;
     private cachedApi: OpenAPI.Document | null = null;
 
-    constructor(options: OpenApiValidatorOptions) {
+    constructor(options: ResponseValidatorOptions) {
         this.options = {
             ...defaultOptions,
             ...options
@@ -110,74 +103,5 @@ export class OpenApiValidator {
                 validationErrors: validate.errors as Ajv.ErrorObject[]
             })
         }
-    }
-}
-
-export class OpenApiValidationError extends Error {
-    isOpenApiValidationError: boolean = true
-}
-
-export class ResponseDoesNotMatchJSONSchemaError extends OpenApiValidationError {
-    constructor(public validationResult: { response: ResponseToValidate, schema: any, validationErrors: Ajv.ErrorObject[] }) {
-        super(`
-        Response does not match defined Open API JSON schema.
-
-        Response:
-        ${validationResult.response.method} | ${validationResult.response.requestUrl} | ${validationResult.response.statusCode}
-
-        Body:
-        ${JSON.stringify(validationResult.response.body, null, 2)}
-
-        Validation errors:
-        ${JSON.stringify(validationResult.validationErrors, null, 2)}
-        `)
-        this.name = 'ResponseDoesNotMatchJSONSchemaError'
-    }
-}
-
-export class JSONSchemaMissingError extends OpenApiValidationError {
-    constructor(response: ResponseToValidate) {
-        super(`
-        OpenApi spec does not contain body schema found for response: 
-        ${response.method} | ${response.requestUrl} | ${response.statusCode}
-        Validation cannot be done
-        `)
-        this.name = 'JSONSchemaMissingError'
-    }
-}
-
-export class MultipleJSONSchemasDefinedError extends OpenApiValidationError {
-    constructor(response: ResponseToValidate) {
-        super(`
-        OpenApi has multiple schemas defined for response: 
-        ${response.method} | ${response.requestUrl} | ${response.statusCode}
-        Validation cannot be done
-        `)
-        this.name = 'MultipleJSONSchemasDefinedError'
-    }
-}
-
-export class JSONSchemaCannotBeCompiledError extends OpenApiValidationError {
-    constructor(response: ResponseToValidate, jsonSchemaCompilationError: Error) {
-        super(`
-        JSON schema found for response:
-        ${response.method} | ${response.requestUrl} | ${response.statusCode}
-        is found, but cannot be used since AJV cannot compile schema. This is OpenApi spec issue.
-
-        Got AJV error ${jsonSchemaCompilationError.name} with message:
-        ${jsonSchemaCompilationError.message}
-
-        Validation cannot be done
-        `)
-        this.name = 'JSONSchemaCannotBeCompiledError'
-    }
-}
-
-export class UrlIsNotDescribedInOpenApiError extends OpenApiValidationError {
-    constructor(url: string) {
-        super(`
-        OpenApi specification does not contain specification for ${url} 
-        `)
-        this.name = 'UrlIsNotDescribedInOpenApiError'
     }
 }
