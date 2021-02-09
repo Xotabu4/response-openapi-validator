@@ -10,6 +10,8 @@ This library allows to match your existing response against your swagger/openapi
 
 
 ```typescript
+import { ResponseValidator } from "response-openapi-validator";
+
 const validator = new ResponseValidator({
     openApiSpecPath: "./.temp/open_api_docs.json",
 });
