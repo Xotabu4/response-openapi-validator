@@ -1,6 +1,7 @@
 import * as SwaggerParser from "@apidevtools/swagger-parser";
 import * as URItemplate from 'uri-templates'
 import Ajv from 'ajv/dist/ajv';
+import addFormats from 'ajv-formats'
 import type { OpenAPI, OpenAPIV2, OpenAPIV3 } from "openapi-types";
 
 import {
@@ -99,6 +100,7 @@ export class ResponseValidator {
         const schema = schemas[0];
 
         const ajv = new Ajv(this.options.ajvOptions);
+        addFormats(ajv)
         let validate
         try {
             validate = ajv.compile(schema);
