@@ -101,6 +101,9 @@ export class ResponseValidator {
 
         const ajv = new Ajv(this.options.ajvOptions);
         addFormats(ajv)
+        for (const key in this.options.ajvOptions.formats) {
+            ajv.addFormat(key, this.options.ajvOptions.formats[key])
+        }
         let validate
         try {
             validate = ajv.compile(schema);
