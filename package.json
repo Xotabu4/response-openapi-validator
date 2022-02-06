@@ -1,6 +1,6 @@
 {
   "name": "response-openapi-validator",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Asserts your responses against Swagger/OpenApi docs. Useful for API testing.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
