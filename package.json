@@ -10,7 +10,8 @@
   "author": "Oleksandr Khotemskyi <xotabu4@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "ajv": "^6.12.3",
+    "ajv": "8.6.2",
+    "ajv-formats": "2.1.1",
     "swagger-parser": "^9.0.1",
     "uri-templates": "^0.2.0"
   },

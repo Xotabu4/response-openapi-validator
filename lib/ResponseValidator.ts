@@ -1,7 +1,8 @@
 import * as SwaggerParser from "@apidevtools/swagger-parser";
 import * as URItemplate from 'uri-templates'
-import * as Ajv from 'ajv';
-import type { OpenAPI, OpenAPIV2 } from "openapi-types";
+import Ajv from 'ajv/dist/ajv';
+import addFormats from 'ajv-formats'
+import type { OpenAPI, OpenAPIV2, OpenAPIV3 } from "openapi-types";
 
 import {
     UrlIsNotDescribedInOpenApiError, JSONSchemaMissingError, MultipleJSONSchemasDefinedError,
@@ -16,7 +17,7 @@ const defaultOptions: ResponseValidatorOptions = {
     ajvOptions: {
         allErrors: true,
         verbose: true,
-        jsonPointers: true,
+        strict: 'log'
     }
 }
 
@@ -69,9 +70,25 @@ export class ResponseValidator {
         if (!response) {
             throw new Error('response argument is not defined. This is testing framework issue, not real bug')
         }
+        const findSchemaInPath = function (path) {
+            //Early return
+            if (path.schema !== undefined) {
+                return path.schema
+            }
+            let result, property
+            for (property in path) {
+                if (path.hasOwnProperty(property) &&typeof path[property] === 'object') {
+                    result = findSchemaInPath(path[property])
+                    if (result) {
+                        return result
+                    }
+                }
+            }
+            return result
+        }
         const matchingPaths = await this.findMatchingPathInDocs(response.requestUrl)
         const schemas = Object.values<OpenAPIV2.PathsObject>(matchingPaths)
-            .map(pathObj => pathObj[response.method.toLowerCase()]?.responses[response.statusCode]?.schema)
+            .map(pathObj => findSchemaInPath(pathObj[response.method.toLowerCase()]?.responses[response.statusCode]))
             .filter(schema => schema !== undefined && schema !== null)
 
         if (schemas.length === 0) {
@@ -83,6 +100,10 @@ export class ResponseValidator {
         const schema = schemas[0];
 
         const ajv = new Ajv(this.options.ajvOptions);
+        addFormats(ajv)
+        for (const key in this.options.ajvOptions.formats) {
+            ajv.addFormat(key, this.options.ajvOptions.formats[key])
+        }
         let validate
         try {
             validate = ajv.compile(schema);
@@ -100,7 +121,7 @@ export class ResponseValidator {
                     body: response.body,
                 },
                 schema: schema,
-                validationErrors: validate.errors as Ajv.ErrorObject[]
+                validationErrors: validate.errors
             })
         }
     }
