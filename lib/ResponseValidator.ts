@@ -1,6 +1,6 @@
-import * as SwaggerParser from "@apidevtools/swagger-parser";
-import * as URItemplate from 'uri-templates'
-import Ajv from 'ajv/dist/ajv';
+import * as OpenAPIParser from '@readme/openapi-parser';
+import URItemplate from 'uri-templates';
+import Ajv from "ajv/dist/core";
 import addFormats from 'ajv-formats'
 import type { OpenAPI, OpenAPIV2, OpenAPIV3 } from "openapi-types";
 
@@ -8,7 +8,8 @@ import {
     UrlIsNotDescribedInOpenApiError, JSONSchemaMissingError, MultipleJSONSchemasDefinedError,
     JSONSchemaCannotBeCompiledError, ResponseDoesNotMatchJSONSchemaError
 } from "./Errors";
-import { ResponseValidatorOptions, ResponseToValidate } from "./Types";
+import { ResponseToValidate, ResponseValidatorOptions } from "./Types";
+
 
 
 const defaultOptions: ResponseValidatorOptions = {
@@ -34,36 +35,40 @@ export class ResponseValidator {
 
     protected async loadApiDocs(): Promise<OpenAPI.Document> {
         if (this.cachedApi === null) {
-            this.cachedApi = await SwaggerParser.dereference(this.options.openApiSpecPath);
+            this.cachedApi = await (OpenAPIParser as any).dereference(this.options.openApiSpecPath);
         }
-        return this.cachedApi
+        return this.cachedApi;
     }
 
-    protected async findMatchingPathInDocs(url: string): Promise<OpenAPIV2.PathsObject> {
+    protected async findMatchingPathInDocs(url: string): Promise<Partial<OpenAPIV3.PathsObject>> {
         const api = await this.loadApiDocs();
-        const urlPath = new URL(url).pathname
-        // Direct match, best case
+        const urlPath = new URL(url).pathname;
+    
         for (const template of Object.keys(api.paths)) {
             if (`${this.options.apiPathPrefix}${template}` === urlPath) {
-                return { [template]: api.paths[template] }
+                return { [template]: api.paths[template] as OpenAPIV3.PathItemObject };
             }
         }
+    
         const matchingPaths = Object.keys(api.paths).filter(template => {
             try {
-                const templatePath = `${this.options.apiPathPrefix}${template}`
-                // Number of path sections is not matches
+                const templatePath = `${this.options.apiPathPrefix}${template}`;
                 if (templatePath.split('/').length !== urlPath.split('/').length) {
-                    return false
+                    return false;
                 }
-                return URItemplate(templatePath).test(urlPath)
+                return (URItemplate(templatePath) as any).test(urlPath);
             } catch (err) {
-                return false
+                return false;
             }
-        }).filter(path => path !== null && path !== undefined)
+        }).filter(Boolean);
+    
         if (matchingPaths.length === 0) {
-            throw new UrlIsNotDescribedInOpenApiError(url)
+            throw new UrlIsNotDescribedInOpenApiError(url);
         }
-        return Object.fromEntries(matchingPaths.map(pth => [pth, api.paths[pth]]))
+    
+        return Object.fromEntries(
+            matchingPaths.map(pth => [pth, api.paths[pth] as OpenAPIV3.PathItemObject])
+        ) as Partial<OpenAPIV3.PathsObject>;
     }
 
     public async assertResponse(response: ResponseToValidate): Promise<void> {
@@ -71,7 +76,6 @@ export class ResponseValidator {
             throw new Error('response argument is not defined. This is testing framework issue, not real bug')
         }
         const findSchemaInPath = function (path) {
-            //Early return
             if (path.schema !== undefined) {
                 return path.schema
             }
@@ -86,10 +90,17 @@ export class ResponseValidator {
             }
             return result
         }
-        const matchingPaths = await this.findMatchingPathInDocs(response.requestUrl)
-        const schemas = Object.values<OpenAPIV2.PathsObject>(matchingPaths)
-            .map(pathObj => findSchemaInPath(pathObj[response.method.toLowerCase()]?.responses[response.statusCode]))
-            .filter(schema => schema !== undefined && schema !== null)
+        const matchingPaths = await this.findMatchingPathInDocs(response.requestUrl);
+        const schemas = Object.values(matchingPaths)
+        .flatMap(pathObj => {
+            const method = response.method.toLowerCase() as keyof OpenAPIV3.PathItemObject;
+            const methodObj = pathObj[method] as OpenAPIV3.OperationObject | undefined;
+            const responseObj = methodObj?.responses?.[response.statusCode];
+            return responseObj ? [findSchemaInPath(responseObj)] : [];
+        })
+        .filter((schema): schema is NonNullable<ReturnType<typeof findSchemaInPath>> => 
+            schema !== undefined && schema !== null
+        );
 
         if (schemas.length === 0) {
             throw new JSONSchemaMissingError(response)
@@ -99,9 +110,12 @@ export class ResponseValidator {
         }
         const schema = schemas[0];
 
-        const ajv = new Ajv(this.options.ajvOptions);
-        addFormats(ajv)
-        for (const key in this.options.ajvOptions.formats) {
+        const ajv = new Ajv({
+            ...this.options.ajvOptions,
+            strict: false
+          });
+          (addFormats as any)(ajv);
+          for (const key in this.options.ajvOptions.formats) {
             ajv.addFormat(key, this.options.ajvOptions.formats[key])
         }
         let validate
